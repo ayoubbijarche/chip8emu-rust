@@ -1,0 +1,12 @@
+//CHIP8 TECHNICAL SPECIFICATIONS\\
+  *64*32 monochrome display res
+  *8 bit general purpose registers referred to as V0 thru VF . VF also doubles as the flag resgister for overflow operation.
+  *16 bit program counter
+  *signle 16 bit register I for memory pointer access
+  *4kb ram
+  *16 bit stack for calling subroutines
+  *16 key inputs
+  *two special registers which decrease after each frame and triggers when they reach 0 :
+    -delay timer : for time based game events
+    -sound timer : used to trigger audio
+//CHIP8 TECHNICAL SPECIFICATIONS\\
