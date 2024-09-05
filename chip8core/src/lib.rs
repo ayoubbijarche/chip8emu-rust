@@ -96,4 +96,22 @@ impl Emu{
     self.st = 0;
   }
   
+  pub fn count(&mut self){
+    //fetch instructions
+    let op = self.fetch();
+    //decode
+    
+    //execute
+  }
+  
+  fn fetch(&mut self)->u16{
+    //fetching
+    let high = self.ram[self.pc as usize] as u16;
+    let low = self.ram[(self.pc + 1) as usize] as u16;
+    let op = (high << 8 ) | low;
+    self.pc += 2;
+    op
+  }
+  
 }
+
