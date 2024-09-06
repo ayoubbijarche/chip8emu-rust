@@ -1,3 +1,43 @@
+
+/*
+3XNN Skip if VX == 0xNN
+4XNN Skip if VX != 0xNN
+5XY0 Skip if VX == VY
+6XNN VX = 0xNN
+7XNN VX += 0xNN Doesn’t affect carry flag
+8XY0 VX = VY
+8XY1 VX |= VY
+8XY2 VX &= VY
+8XY3 VX ˆ= VY
+8XY4 VX += VY Sets VF if carry
+8XY5 VX -= VY Clears VF if borrow
+8XY6 VX »= 1 Store dropped bit in VF
+8XY7 VX = VY - VX Clears VF if borrow
+8XYE VX «= 1 Store dropped bit in VF
+9XY0 Skip if VX != VY
+ANNN I = 0xNNN
+BNNN Jump to V0 + 0xNNN
+CXNN VX = rand() & 0xNN
+DXYN Draw sprite at (VX, VY) Sprite is 0xN pixels tall, on/off based on value in I, VF set if
+any pixels flipped
+EX9E Skip if key index in VX is pressed
+EXA1 Skip if key index in VX isn’t pressed
+FX07 VX = Delay Timer
+FX0A Waits for key press, stores index in VX Blocking operation
+FX15 Delay Timer = VX
+FX18 Sound Timer = VX
+FX1E I += VX
+FX29 Set I to address of font character in VX
+FX33 Stores BCD encoding of VX into I
+FX55 Stores V0 thru VX into RAM address
+starting at I
+Inclusive range
+FX65 Fills V0 thru VX with RAM values starting
+at address in I
+*/
+
+
+
 const RAM_SIZE : usize = 4096;
 pub const W : usize = 64;
 pub const H : usize = 32;
@@ -96,11 +136,11 @@ impl Emu{
     self.st = 0;
   }
   
-  pub fn count(&mut self){
+  pub fn tick(&mut self){
     //fetch instructions
     let op = self.fetch();
     //decode
-    
+    self.execute(op);
     //execute
   }
   
@@ -113,5 +153,118 @@ impl Emu{
     op
   }
   
+  pub fn tick_time(&mut self){
+    if self.dt > 0 {
+      self.dt -= 1;
+    }
+    if self.st > 0{
+      if self.st == 1 {
+        // playsound
+      }
+      self.st -= 1;
+    }
+  }
+  
+  pub fn execute(&mut self, op : u16){
+    let digit1 = (op & 0xF000) >> 12;
+    let digit2 = (op & 0x0F00) >> 8;
+    let digit3 = (op & 0x00F0) >> 4;
+    let digit4 = op & 0x000F;
+    match(digit1 , digit2 , digit3 , digit4){
+      (_,_,_,_) => unimplemented!("not implemented opcode : {}" , op),
+      
+      // clear screen using 00E0 opcode
+      (0 , 0 , 0xE , 0) => {
+        self.screen = [false; W * H];
+      },
+      
+      // return subroutine using 00EE opcode
+      (0 ,0 , 0xE , 0xE) => {
+        let ret_address = self.pop();
+        self.pc = ret_address;
+      }
+      
+      // jump instruction to the 0xNNN address
+      (1 , _ , _ , _) => {
+        let nnn = op & 0xFFF;
+        self.pc = nnn;
+      }
+      
+      // 2NNN entering subrouting  at 0xNNN address, adding pc to current stack
+      (2 , _ , _ , _) => {
+        let nnn = op & 0xFFF;
+        self.push(self.pc);
+        self.pc = nnn;
+      }
+      
+      //conditions and jumping to next instruction
+      (3, _ , _ ,_) => {
+        let x = digit2 as usize;
+        let nn = (op & 0xFF) as u8;
+        if self.v_reg[x] == nn {
+          self.pc += 2;
+        }
+      }
+      
+      (4 , _ , _ , _) => {
+        let x = digit2 as usize;
+        let nn = (op & 0xFF) as u8;
+        if self.v_reg[x] != nn {
+          self.pc += 2;
+        }
+      }
+      
+      (5 , _ , _ , _) => {
+        let x = digit2 as usize;
+        let y = digit3 as usize;
+        if self.v_reg[x] == self.v_reg[y]{
+          self.pc += 2;
+        }
+      }
+      
+      (6 , _ , _ , _) => {
+        let x = digit2 as usize;
+        let nn = (op & 0xFF) as u8;
+        self.v_reg[x] = nn;
+      }
+      
+      (7 , _ , _ , _) => {
+        let x = digit2 as usize;
+        let nn = (op & 0xFF) as u8;
+        self.v_reg[x] = self.v_reg[x].wrapping_add(nn);
+      }
+      
+      (8 , _ , _ , _) =>{
+        let x = digit2 as usize;
+        let y = digit3 as usize;
+        self.v_reg[x] = self.v_reg[y];
+      }
+      
+      (8 , _ , _ , 1) => {
+        let x = digit2 as usize;
+        let y = digit3 as usize;
+        self.v_reg[x] |= self.v_reg[y];
+      }
+      
+      (8 , _ , _ , 2) => {
+        let x = digit2 as usize;
+        let y = digit3 as usize;
+        self.v_reg[x] &= self.v_reg[y];
+      }
+      
+      (8 , _ , _ , 3) => {
+        let x = digit2 as usize;
+        let y = digit3 as usize;
+        self.v_reg[x] ^= self.v_reg[y];
+      }
+      
+      (8 , _ , _ , 4) => {
+        let x = digit2 as usize;
+        let y = digit3 as usize;
+        self.v_reg[x] += self.v_reg[y];
+      }
+      
+    }
+  }
 }
 
