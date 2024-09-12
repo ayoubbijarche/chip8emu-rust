@@ -32,16 +32,14 @@ FX55 Stores V0 thru VX into RAM address starting at I Inclusive range
 FX65 Fills V0 thru VX with RAM values starting
 at address in I
 */
-
 use rand::random;
-
 
 const RAM_SIZE : usize = 4096;
 pub const W : usize = 64;
 pub const H : usize = 32;
 const REG_NUMS : usize = 16;
 const STACK_SIZE : usize = 16;
-const START_ADRR : u16 = 0x200;
+const START_ADDR : u16 = 0x200;
 const NUM_KEYS : usize = 16;
 const FONTSET_SIZE: usize = 80;
 
@@ -79,21 +77,21 @@ pub struct Emu{
 
 impl Emu{
   pub fn new() -> Self{
-    Self{
-      pc : START_ADRR,
-      ram : [0 ; RAM_SIZE],
-      screen : [false ; W*H],
-      v_reg : [0 ; REG_NUMS],
-      i_reg : 0,
-      sp : 0,
-      stack : [0 ; STACK_SIZE],
-      keys : [false ; NUM_KEYS],
-      dt : 0,
-      st : 0,
-    };
+    // Self{
+    //   pc : START_ADRR,
+    //   ram : [0 ; RAM_SIZE],
+    //   screen : [false ; W*H],
+    //   v_reg : [0 ; REG_NUMS],
+    //   i_reg : 0,
+    //   sp : 0,
+    //   stack : [0 ; STACK_SIZE],
+    //   keys : [false ; NUM_KEYS],
+    //   dt : 0,
+    //   st : 0,
+    // };
     
     let mut new_emu = Self{
-      pc : START_ADRR,
+      pc : START_ADDR,
       ram : [0 ; RAM_SIZE],
       screen : [false ; W*H],
       v_reg : [0 ; REG_NUMS],
@@ -122,7 +120,7 @@ impl Emu{
   }
   
   pub fn reset(&mut self){
-    self.pc = START_ADRR;
+    self.pc = START_ADDR;
     self.ram = [0 ; RAM_SIZE];
     self.screen = [false ; W*H];
     self.v_reg = [0 ; REG_NUMS];
@@ -137,19 +135,19 @@ impl Emu{
   pub fn tick(&mut self){
     //fetch instructions
     let op = self.fetch();
-    //decode
+    //decode & execute
     self.execute(op);
-    //execute
   }
   
   fn fetch(&mut self)->u16{
-    //fetching
     let high = self.ram[self.pc as usize] as u16;
     let low = self.ram[(self.pc + 1) as usize] as u16;
     let op = (high << 8 ) | low;
     self.pc += 2;
     op
   }
+
+  
   
   pub fn tick_time(&mut self){
     if self.dt > 0 {
@@ -169,7 +167,8 @@ impl Emu{
     let digit3 = (op & 0x00F0) >> 4;
     let digit4 = op & 0x000F;
     match(digit1 , digit2 , digit3 , digit4){
-      (_,_,_,_) => unimplemented!("not implemented opcode : {}" , op),
+
+
       
       // clear screen using 00E0 opcode
       (0 , 0 , 0xE , 0) => {
@@ -211,8 +210,9 @@ impl Emu{
           self.pc += 2;
         }
       }
+    
       
-      (5 , _ , _ , _) => {
+      (5 , _ , _ , 0) => {
         let x = digit2 as usize;
         let y = digit3 as usize;
         if self.v_reg[x] == self.v_reg[y]{
@@ -232,7 +232,7 @@ impl Emu{
         self.v_reg[x] = self.v_reg[x].wrapping_add(nn);
       }
       
-      (8 , _ , _ , _) =>{
+      (8 , _ , _ , 0) =>{
         let x = digit2 as usize;
         let y = digit3 as usize;
         self.v_reg[x] = self.v_reg[y];
@@ -293,7 +293,7 @@ impl Emu{
       
       (8 , _ , _ , 0xE) => {
         let x = digit2 as usize;
-        let msb = (self.v_reg[x] & 7 )<<1;
+        let msb = (self.v_reg[x] >> 7 ) & 1;
         self.v_reg[x] <<= 1;
         self.v_reg[0xF] = msb;
       }
@@ -351,7 +351,6 @@ impl Emu{
         }
       }
       
-      
       (0xE , _ , 9 , 0xE) => {
         let x = digit2 as usize;
         let vx = self.v_reg[x];
@@ -382,6 +381,7 @@ impl Emu{
         
         for i in 0..self.keys.len(){
           if self.keys[i]{
+            self.v_reg[x] = i as u8;
             pressed = true;
             break;
           }   
@@ -418,8 +418,8 @@ impl Emu{
         let x = digit2 as usize;
         let vx = self.v_reg[x] as f32;
         let hundreds = (vx / 100.0).floor() as u8;
-        let tens = (vx / 10.0).floor() as u8;
-        let ones = (vx/ 1.0).floor() as u8;
+        let tens = ((vx / 10.0) % 10.0).floor() as u8;
+        let ones = (vx % 10.0) as u8;
         self.ram[self.i_reg as usize] = hundreds;
         self.ram[(self.i_reg + 1) as usize] = tens;
         self.ram[(self.i_reg + 2) as usize] = ones;
@@ -440,6 +440,9 @@ impl Emu{
             self.v_reg[idx] = self.ram[i + idx]; 
         }
       }
+            (0, 0, 0, 0) => return,
+      (_,_,_,_) => unimplemented!("opcode {}" , op),
+
       
     }
   }
@@ -454,8 +457,8 @@ impl Emu{
   }
 
   pub fn load(&mut self , data : &[u8]){
-    let start = START_ADRR as usize;
-    let end = (START_ADRR as usize) + data.len();
+    let start = START_ADDR as usize;
+    let end = (START_ADDR as usize) + data.len();
     self.ram[start..end].copy_from_slice(data);
   }
 }
