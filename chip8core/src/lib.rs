@@ -147,19 +147,21 @@ impl Emu{
     op
   }
 
-  
-  
+
   pub fn tick_time(&mut self){
     if self.dt > 0 {
       self.dt -= 1;
     }
     if self.st > 0{
       if self.st == 1 {
-        // playsound
+        //too lazy to implement sound
       }
       self.st -= 1;
     }
   }
+  
+
+
   
   pub fn execute(&mut self, op : u16){
     let digit1 = (op & 0xF000) >> 12;
