@@ -13,7 +13,7 @@ use std::env;
 const SCALE : u32 = 15;
 const S_W : u32 = (W as u32) * SCALE;
 const S_H : u32 = (H as u32) * SCALE;
-const TICK_FRAME: usize = 10;
+const TICK_FRAME: usize = 15;
 
 fn main() {
   //args
@@ -26,7 +26,7 @@ fn main() {
   //sdl context
   let sdl_ctx = sdl2::init().unwrap();
   let video_subsystem = sdl_ctx.video().unwrap();
-  let window = video_subsystem.window("chip8 emulator", S_W , S_H).position_centered().vulkan().build().unwrap();
+  let window = video_subsystem.window("chip8 emulator", S_W , S_H).position_centered().opengl().build().unwrap();
   let mut canvas = window.into_canvas().present_vsync().build().unwrap();
   canvas.clear();
   canvas.present();
@@ -68,22 +68,31 @@ fn main() {
   }
 }
 
-fn draw(emu : &Emu, canvas : &mut Canvas<Window>){
+fn draw(emu: &Emu, canvas: &mut Canvas<Window>) {
   canvas.set_draw_color(Color::RGB(0, 0, 0));
   canvas.clear();
+
   let screen_buffer = emu.getscreen();
   canvas.set_draw_color(Color::RGB(255, 255, 255));
-  for (i , pixel) in screen_buffer.iter().enumerate(){
-    if *pixel {
-      let x = (i as u32 % S_W) as u32;
-      let y = (i as u32 / S_W) as u32;
-      let rect = Rect::new((x * SCALE) as i32, (y * SCALE) as i32 , SCALE , SCALE);
-      canvas.fill_rect(rect).unwrap();
+
+  for y in 0..H {
+    for x in 0..W {
+      let index = y * W + x;
+      if screen_buffer[index] {
+        let rect = Rect::new(
+        (x as u32 * SCALE) as i32,
+        (y as u32 * SCALE) as i32,
+        SCALE,
+        SCALE
+        );
+        canvas.fill_rect(rect).unwrap();
+        }
+      }
     }
-  }
-  
   canvas.present();
 }
+
+
 
 fn keytobtn(key : Keycode) -> Option<usize>{
   match key {
@@ -91,15 +100,15 @@ fn keytobtn(key : Keycode) -> Option<usize>{
     Keycode::Num2 => Some(0x2),
     Keycode::Num3 => Some(0x3),
     Keycode::Num4 => Some(0xC),
-    Keycode::Q => Some(0x4),
-    Keycode::W => Some(0x5),
+    Keycode::A => Some(0x4),
+    Keycode::Z => Some(0x5),
     Keycode::E => Some(0x6),
     Keycode::R => Some(0xD),
-    Keycode::A => Some(0x7),
+    Keycode::Q => Some(0x7),
     Keycode::S => Some(0x8),
     Keycode::D => Some(0x9),
     Keycode::F => Some(0xE),
-    Keycode::Z => Some(0xA),
+    Keycode::W => Some(0xA),
     Keycode::X => Some(0x0),
     Keycode::C => Some(0xB),
     Keycode::V => Some(0xF),

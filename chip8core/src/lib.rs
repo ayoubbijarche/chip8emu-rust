@@ -167,9 +167,7 @@ impl Emu{
     let digit3 = (op & 0x00F0) >> 4;
     let digit4 = op & 0x000F;
     match(digit1 , digit2 , digit3 , digit4){
-
-
-      
+      (0, 0, 0, 0) => return,
       // clear screen using 00E0 opcode
       (0 , 0 , 0xE , 0) => {
         self.screen = [false; W * H];
@@ -323,34 +321,74 @@ impl Emu{
         self.v_reg[x] = rng & nn;
       }
       
-      (0xD , _ , _ , _) => {
-        let x_coord = self.v_reg[digit2 as usize] as u16;
-        let y_coord = self.v_reg[digit3 as usize] as u16;
-        let num_rows = digit4;
-        let mut flipped = false;
-        for y_line in 0..num_rows{
-          let addr = self.i_reg + y_line as u16;
-          let pixels = self.ram[addr as usize];
+      //draw sprites
+      
+      // (0xD , _ , _ , _) => {
+      //   let x_coord = self.v_reg[digit2 as usize] as u16;
+      //   let y_coord = self.v_reg[digit3 as usize] as u16;
+      //   let num_rows = digit4;
+      //   let mut flipped = false;
+      //   for y_line in 0..num_rows{
+      //     let addr = self.i_reg + y_line as u16;
+      //     let pixels = self.ram[addr as usize];
           
-        //iterate over each columns in row  
-          for x_line in 0..8 {
-              if (pixels & (0b1000_0000 >> x_line)) != 0 {
-              let x = (x_coord + x_line) as usize % W;
-              let y = (y_coord + y_line) as usize % H;
-              let idx = x + W * y;
-              flipped |= self.screen[idx];
-              self.screen[idx] ^= true;
-            }
-          }
-        }
+      //   //iterate over each columns in row  
+      //     for x_line in 0..8 {
+      //         if (pixels & (0b1000_0000 >> x_line)) != 0 {
+      //         let x = (x_coord + x_line) as usize % W;
+      //         let y = (y_coord + y_line) as usize % H;
+      //         let idx = x + W * y;
+      //         flipped |= self.screen[idx];
+      //         self.screen[idx] ^= true;
+      //       }
+      //     }
+      //   }
         
-        if flipped {
-          self.v_reg[0xF] = 1;
-        }else{
-          self.v_reg[0xF] = 0;
-        }
+      //   if flipped {
+      //     self.v_reg[0xF] = 1;
+      //   }else{
+      //     self.v_reg[0xF] = 0;
+      //   }
+      // }
+      
+      
+      
+      
+      
+      
+      
+      
+      (0xD, _, _, _) => {
+          let x_coord = self.v_reg[digit2 as usize] as u16;
+          let y_coord = self.v_reg[digit3 as usize] as u16;
+          let num_rows = digit4;
+          let mut flipped = false;
+      
+          for y_line in 0..num_rows {
+              let addr = self.i_reg + y_line as u16;
+              let pixels = self.ram[addr as usize];
+      
+              // Iterate over each column in the row
+              for x_line in 0..8 {
+                  if (pixels & (0b1000_0000 >> x_line)) != 0 {
+                      let x = (x_coord + x_line) as usize % W;
+                      let y = (y_coord + y_line) as usize % H;
+                      let idx = x + W * y;
+                      flipped |= self.screen[idx];
+                      self.screen[idx] ^= true;
+                  }
+              }
+          }
+      
+          // Set VF if any pixels were flipped
+          self.v_reg[0xF] = if flipped { 1 } else { 0 };
       }
       
+      
+      
+      
+      
+      //////////////////////////////////////////////////
       (0xE , _ , 9 , 0xE) => {
         let x = digit2 as usize;
         let vx = self.v_reg[x];
@@ -440,7 +478,7 @@ impl Emu{
             self.v_reg[idx] = self.ram[i + idx]; 
         }
       }
-            (0, 0, 0, 0) => return,
+      
       (_,_,_,_) => unimplemented!("opcode {}" , op),
 
       
