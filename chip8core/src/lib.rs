@@ -1,4 +1,3 @@
-
 /*
 3XNN Skip if VX == 0xNN
 4XNN Skip if VX != 0xNN
@@ -427,23 +426,37 @@ impl Emu{
       }
 
       (0xF, _ , 5 , 5) => {
-          let x = digit2 as usize;
-          let i = self.i_reg as usize;
-
-          for idx in 0..=x{
-              self.ram[i + idx] = self.v_reg[idx];
+        let x = digit2 as usize;
+        let i = self.i_reg as usize;
+        for idx in 0..=x{
+            self.ram[i + idx] = self.v_reg[idx];
         }
       }
 
       (0xF , _ , 6 , 5) => {
-          let x = digit2 as usize;
-          let i = self.i_reg as usize;
-          for idx in 0..=x{
-              self.v_reg[idx] = self.ram[i + idx]; 
+        let x = digit2 as usize;
+        let i = self.i_reg as usize;
+        for idx in 0..=x{
+            self.v_reg[idx] = self.ram[i + idx]; 
         }
       }
       
     }
+  }
+
+
+  pub fn getscreen(&self) -> &[bool] {
+    &self.screen
+  }
+
+  pub fn keypress(&mut self , idx : usize , pressed : bool){
+    self.keys[idx] = pressed;
+  }
+
+  pub fn load(&mut self , data : &[u8]){
+    let start = START_ADRR as usize;
+    let end = (START_ADRR as usize) + data.len();
+    self.ram[start..end].copy_from_slice(data);
   }
 }
 
