@@ -16,14 +16,13 @@ const S_H : u32 = (H as u32) * SCALE;
 const TICK_FRAME: usize = 15;
 
 fn main() {
-  //args
+  
   let args : Vec<_> = env::args().collect();
   if args.len() != 2 {
     println!("running cargo at : path/to/game");
     return;
   }
   
-  //sdl context
   let sdl_ctx = sdl2::init().unwrap();
   let video_subsystem = sdl_ctx.video().unwrap();
   let window = video_subsystem.window("chip8 emulator", S_W , S_H).position_centered().opengl().build().unwrap();

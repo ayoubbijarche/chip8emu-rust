@@ -77,19 +77,6 @@ pub struct Emu{
 
 impl Emu{
   pub fn new() -> Self{
-    // Self{
-    //   pc : START_ADRR,
-    //   ram : [0 ; RAM_SIZE],
-    //   screen : [false ; W*H],
-    //   v_reg : [0 ; REG_NUMS],
-    //   i_reg : 0,
-    //   sp : 0,
-    //   stack : [0 ; STACK_SIZE],
-    //   keys : [false ; NUM_KEYS],
-    //   dt : 0,
-    //   st : 0,
-    // };
-    
     let mut new_emu = Self{
       pc : START_ADDR,
       ram : [0 ; RAM_SIZE],
@@ -323,43 +310,6 @@ impl Emu{
         self.v_reg[x] = rng & nn;
       }
       
-      //draw sprites
-      
-      // (0xD , _ , _ , _) => {
-      //   let x_coord = self.v_reg[digit2 as usize] as u16;
-      //   let y_coord = self.v_reg[digit3 as usize] as u16;
-      //   let num_rows = digit4;
-      //   let mut flipped = false;
-      //   for y_line in 0..num_rows{
-      //     let addr = self.i_reg + y_line as u16;
-      //     let pixels = self.ram[addr as usize];
-          
-      //   //iterate over each columns in row  
-      //     for x_line in 0..8 {
-      //         if (pixels & (0b1000_0000 >> x_line)) != 0 {
-      //         let x = (x_coord + x_line) as usize % W;
-      //         let y = (y_coord + y_line) as usize % H;
-      //         let idx = x + W * y;
-      //         flipped |= self.screen[idx];
-      //         self.screen[idx] ^= true;
-      //       }
-      //     }
-      //   }
-        
-      //   if flipped {
-      //     self.v_reg[0xF] = 1;
-      //   }else{
-      //     self.v_reg[0xF] = 0;
-      //   }
-      // }
-      
-      
-      
-      
-      
-      
-      
-      
       (0xD, _, _, _) => {
           let x_coord = self.v_reg[digit2 as usize] as u16;
           let y_coord = self.v_reg[digit3 as usize] as u16;
@@ -387,10 +337,6 @@ impl Emu{
       }
       
       
-      
-      
-      
-      //////////////////////////////////////////////////
       (0xE , _ , 9 , 0xE) => {
         let x = digit2 as usize;
         let vx = self.v_reg[x];
